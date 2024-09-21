@@ -137,8 +137,7 @@ class SqlService {
 
   Future<List<Map<String, dynamic>>> writeQueryiOS(String query) async {
     try {
-      final String? result =
-          await _channel.invokeMethod('queryDatabase', {'query': query});
+      await _channel.invokeMethod('queryDatabase', {'query': query});
       return [];
     } on PlatformException catch (e) {
       if (kDebugMode) {
