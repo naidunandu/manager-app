@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:manager_app/models/department_model.dart';
 import 'package:manager_app/models/employee_model.dart';
 import 'package:mssql_connection/mssql_connection.dart';
 
 class SqlService {
+  static const MethodChannel _channel = MethodChannel('mssql_channel');
   MssqlConnection mssqlConnection = MssqlConnection.getInstance();
 
   Future<bool> _isConnected() async {
@@ -36,6 +38,9 @@ class SqlService {
         List<Employee> employeeList = results.map((employee) => Employee.fromJson(employee)).toList();
         return employeeList;
       }
+    }else{
+      String query = 'SELECT * FROM Employees ORDER BY EmployeeID DESC';
+      await queryDatabase(query);
     }
     return [];
   }
@@ -84,6 +89,18 @@ class SqlService {
       return true;
     } else {
       return true;
+    }
+  }
+
+
+  static Future<String?> queryDatabase(String query) async {
+    try {
+      final String? result = await _channel.invokeMethod('queryDatabase', {'query': query});
+      print(result);
+      return result;
+    } on PlatformException catch (e) {
+      print("Failed to query database: '${e.message}'.");
+      return null;
     }
   }
 }
