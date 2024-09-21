@@ -26,7 +26,7 @@ class Employee {
     firstName: json["FirstName"],
     lastName: json["LastName"],
     departmentId: json["DepartmentID"],
-    salary: json["Salary"],
+    salary: double.tryParse(json["Salary"].toString()) ?? 0 ,
     hireDate: json["HireDate"],
   );
 

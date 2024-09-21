@@ -17,7 +17,7 @@ class Department {
 
   factory Department.fromJson(Map<String, dynamic> json) => Department(
     departmentId: json["DepartmentID"],
-    departmentName: json["DepartmentName"],
+    departmentName: json["DepartmentName"] ?? "",
     location: json["Location"],
   );
 

@@ -9,6 +9,7 @@ import SQLClient
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        GeneratedPluginRegistrant.register(with: self)
         let controller: FlutterViewController = window?.rootViewController as! FlutterViewController
            let mssqlChannel = FlutterMethodChannel(name: "mssql_channel", binaryMessenger: controller.binaryMessenger)
            mssqlChannel.setMethodCallHandler { [weak self] (call: FlutterMethodCall, result: @escaping FlutterResult) in
@@ -23,20 +24,21 @@ import SQLClient
            return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
     
+    var client = SQLClient.sharedInstance()!
     private func queryDatabase(query: String, result: @escaping FlutterResult) {
-       let client = SQLClient.sharedInstance()!
        client.connect("65.1.22.155:1433", username: "test", password: "Test@12345678", database: "dev-db") { success in
          if success {
-           client.execute(query) { (results: [Any]?) in
+             self.client.execute(query) { (results: [Any]?) in
              if let results = results, let firstTable = results.first as? [[String: Any]] {
                let jsonString = self.convertToJSONString(array: firstTable)
                result(jsonString)
              } else {
                result(FlutterError(code: "NO_DATA", message: "No data found", details: nil))
              }
-             client.disconnect()
+            self.client.disconnect()
            }
          } else {
+           self.client.disconnect()
            result(FlutterError(code: "CONNECTION_ERROR", message: "Unable to connect to database", details: nil))
          }
        }

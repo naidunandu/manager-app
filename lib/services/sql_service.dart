@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:manager_app/models/department_model.dart';
 import 'package:manager_app/models/employee_model.dart';
@@ -35,12 +36,16 @@ class SqlService {
         String query = 'SELECT * FROM Employees ORDER BY EmployeeID DESC';
         String result = await mssqlConnection.getData(query);
         List results = jsonDecode(result);
-        List<Employee> employeeList = results.map((employee) => Employee.fromJson(employee)).toList();
+        List<Employee> employeeList =
+            results.map((employee) => Employee.fromJson(employee)).toList();
         return employeeList;
       }
-    }else{
+    } else {
       String query = 'SELECT * FROM Employees ORDER BY EmployeeID DESC';
-      await queryDatabase(query);
+      List results = await getQueryiOS(query);
+      List<Employee> employeeList =
+          results.map((employee) => Employee.fromJson(employee)).toList();
+      return employeeList;
     }
     return [];
   }
@@ -52,9 +57,17 @@ class SqlService {
         String query = 'SELECT * FROM Departments';
         String result = await mssqlConnection.getData(query);
         List results = jsonDecode(result);
-        List<Department> departmentList = results.map((department) => Department.fromJson(department)).toList();
+        List<Department> departmentList = results
+            .map((department) => Department.fromJson(department))
+            .toList();
         return departmentList;
       }
+    } else {
+      String query = 'SELECT * FROM Departments';
+      List results = await getQueryiOS(query);
+      List<Department> departmentList =
+          results.map((department) => Department.fromJson(department)).toList();
+      return departmentList;
     }
     return [];
   }
@@ -78,7 +91,17 @@ class SqlService {
         return false;
       }
     } else {
-      return true;
+      if (isNew) {
+        String query =
+            "INSERT INTO Employees (EmployeeID, FirstName, LastName, Salary, HireDate, DepartmentID) VALUES (${employee.employeeId}, '${employee.firstName}', '${employee.lastName}', ${employee.salary}, '${employee.hireDate}', '${employee.departmentId}');";
+        await writeQueryiOS(query);
+        return true;
+      } else {
+        String query =
+            "UPDATE Employees SET FirstName = '${employee.firstName}', LastName = '${employee.lastName}', Salary = ${employee.salary}, HireDate = '${employee.hireDate}', DepartmentID = '${employee.departmentId}' WHERE EmployeeID = ${employee.employeeId};";
+        await writeQueryiOS(query);
+        return true;
+      }
     }
   }
 
@@ -92,15 +115,36 @@ class SqlService {
     }
   }
 
-
-  static Future<String?> queryDatabase(String query) async {
+  Future<List<Map<String, dynamic>>> getQueryiOS(String query) async {
     try {
-      final String? result = await _channel.invokeMethod('queryDatabase', {'query': query});
-      print(result);
-      return result;
+      final String? result =
+          await _channel.invokeMethod('queryDatabase', {'query': query});
+      if (!result!.contains('Failed to query database')) {
+        List<dynamic> jsonResponse = json.decode(result);
+        List<Map<String, dynamic>> data =
+            List<Map<String, dynamic>>.from(jsonResponse);
+        return data;
+      } else {
+        return [];
+      }
     } on PlatformException catch (e) {
-      print("Failed to query database: '${e.message}'.");
-      return null;
+      if (kDebugMode) {
+        print("Failed to query database: '${e.message}'.");
+      }
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> writeQueryiOS(String query) async {
+    try {
+      final String? result =
+          await _channel.invokeMethod('queryDatabase', {'query': query});
+      return [];
+    } on PlatformException catch (e) {
+      if (kDebugMode) {
+        print("Failed to query database: '${e.message}'.");
+      }
+      return [];
     }
   }
 }

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class ConnectivityProvider with ChangeNotifier {
   ConnectivityResult _connectionStatus = ConnectivityResult.none;
   final Connectivity _connectivity = Connectivity();
-  StreamSubscription<ConnectivityResult>? _subscription;
+  StreamSubscription<List<ConnectivityResult>>? _subscription;
 
   ConnectivityResult get connectionStatus => _connectionStatus;
 
@@ -15,18 +15,18 @@ class ConnectivityProvider with ChangeNotifier {
   }
 
   Future<void> _initConnectivity() async {
-    ConnectivityResult result;
+    List<ConnectivityResult> result;
     try {
       result = await _connectivity.checkConnectivity();
     } catch (e) {
-      result = ConnectivityResult.none;
+      result = [ConnectivityResult.none];
     }
     _updateConnectionStatus(result);
   }
 
-  void _updateConnectionStatus(ConnectivityResult result) {
-    if (_connectionStatus != result) {
-      _connectionStatus = result;
+  void _updateConnectionStatus(List<ConnectivityResult> result) {
+    if (result.isNotEmpty && _connectionStatus != result[0]) {
+      _connectionStatus = result[0];
       notifyListeners();
     }
   }
